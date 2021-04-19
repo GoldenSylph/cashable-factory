@@ -11,7 +11,7 @@ const {
   time
 } = require('@openzeppelin/test-helpers');
 const { ZERO_ADDRESS } = constants;
-const { ZERO, ONE, getMockTokenPrepared, processEventArgs, checkSetter } = require('../utils/common');
+const { ZERO, ONE, getMockTokenPrepared, processEventArgs, checkSetter } = require('../utils/common.js');
 
 
 const MockContract = artifacts.require("MockContract");
