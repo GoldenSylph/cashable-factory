@@ -24,6 +24,9 @@
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 
+require('core-js');
+require('regenerator-runtime');
+require('@babel/register');
 require('dotenv').config();
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const fs = require('fs');
@@ -107,7 +110,8 @@ module.exports = {
   mocha: {
     reporter: 'eth-gas-reporter',
     gasReporter: { 'gasPrice': 1 },
-    timeout: 20000000
+    timeout: 20000000,
+    useColors: true
   },
 
   api_keys: {

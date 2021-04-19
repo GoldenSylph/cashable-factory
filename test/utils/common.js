@@ -32,7 +32,7 @@ const checkSetter = async (
   await contractInstance[setterMethodName](newValue, {from: validSender});
   expect(await contractInstance[getterName]()).to.be.equal(newValue);
   await expectRevert(contractInstance[setterMethodName](newValue, {from: nonValidSender}), revertMessage);
-}
+};
 
 module.exports = {
   DAY: 86400,
