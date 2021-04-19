@@ -21,8 +21,5 @@ Flattened.sol
 .secret
 .env
 
-# generated files
-truffle-config.js
-
 # transportation to frontend
 scripts/transport_to_frontend.sh
