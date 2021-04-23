@@ -14,8 +14,10 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
+
 import "./lib/CashLib.sol";
-import "./CashMachine.sol";
+import "./interfaces/ICash.sol";
+import "./interfaces/ICashMachine.sol";
 import "./interfaces/third_party/aave/ILendingPool.sol";
 import "./interfaces/ICashableStrategy.sol";
 
@@ -35,10 +37,14 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
     // cash machine => volume
     mapping(address => uint256) public volumes;
 
+    // cash machine => earned interest
+    mapping(address => uint256) public interests;
+
     uint256 public totalAmountOfMainTokens;
 
     IERC20 public mainToken;
     IERC20 public mainAToken;
+    ICash public cashToken;
     IUniswapV2Router02 public uniswapRouter;
     ILendingPool public aaveLendingPool;
     address public cashMachineFactory;
@@ -80,13 +86,15 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
       address _mainAToken,
       address _uniswapRouter,
       address _aaveLendingPool,
-      address _cashMachineFactory
+      address _cashMachineFactory,
+      address _cashToken
     ) external initializer {
         mainToken = IERC20(_mainToken);
         mainAToken = IERC20(_mainAToken);
         uniswapRouter = IUniswapV2Router02(_uniswapRouter);
         aaveLendingPool = ILendingPool(_aaveLendingPool);
         cashMachineFactory = _cashMachineFactory;
+        cashToken = ICash(_cashToken);
     }
 
     function _getAmountOut(address _from, address _to, uint256 _amount) internal view returns(uint256, address[] memory) {
@@ -130,11 +138,55 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
         emit Register(_cashMachine, _amount, amountInMainTokens);
     }
 
+    function _contractIsNotDestroyed(address contract) internal returns(bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(contract)
+        }
+        return size > 0;
+    }
+
+
+    function calcInterestInTokens(address who) public view returns(uint256 toMint) {
+        uint256 cashMachinesCount = getRoleMemberCount(CASH_MACHINE_CLONE_ROLE);
+        ICashMachine cashMachine;
+        address machineCreator;
+        for (uint256 i = 0; i < cashMachinesCount; i++) {
+            address cashMachineAddress = getRoleMember(CASH_MACHINE_CLONE_ROLE, i);
+            require(_contractIsNotDestroyed(cashMachineAddress), "cashMachineDestroyed");
+            cashMachine = ICashMachine(cashMachineAddress);
+            machineCreator = cashMachine.creator();
+            if (machineCreator == who) {
+                break;
+            }
+        }
+        require(address(cashMachine) != address(0), "machineNotFound");
+        uint256 nominalsSum = cashMachine.nominalsSum();
+        address machineToken = cashMachine.token();
+        uint256 nominalsSumInTokens = _getAmountOut(
+            machineToken,
+            mainTokenAddress,
+            nominalsSum
+        );
+        uint256 aMainTokenBalance = mainAToken.balanceOf(address(this));
+        uint256 revenue = aMainTokenBalance.sub(totalAmountOfMainTokens);
+        return revenue * (nominalsSumInTokens / totalAmountOfMainTokens);
+
+    }
+
+    function getInterest() external {
+        // forbid mint whenever he wants
+        address sender = _msgSender();
+        uint256 toMint = calcInterestInTokens(sender);
+        cashToken.mint(sender, toMint);
+    }
+
     function harvest() override public onlyOwnerOrSelf {
         uint256 aMainTokenBalance = mainAToken.balanceOf(address(this));
         if (aMainTokenBalance > totalAmountOfMainTokens) {
             uint256 revenue = aMainTokenBalance.sub(totalAmountOfMainTokens);
-            mainAToken.safeTransfer(owner(), revenue);
+            address _owner = owner();
+            mainAToken.safeTransfer(_owner, revenue);
             emit Harvest(revenue);
         }
     }
@@ -168,7 +220,6 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
         if (volumes[sender] == 0) {
             revokeRole(CASH_MACHINE_CLONE_ROLE, sender);
         }
-        harvest();
         emit Withdraw(sender, amountInTokens, amountInMainTokens);
     }
 

@@ -19,12 +19,14 @@ library CashLib {
         uint256 id;
         address holder;
         uint256 nominal;
+        uint256 design;
     }
 
     struct CashSet {
         EnumerableSet.UintSet ids;
         EnumerableSet.AddressSet holders;
         EnumerableSet.UintSet nominals;
+        EnumerableSet.UintSet designs;
     }
 
     /**
@@ -37,7 +39,8 @@ library CashLib {
         return
             set.ids.add(value.id) &&
             set.holders.add(value.holder) &&
-            set.nominals.add(value.nominal);
+            set.nominals.add(value.nominal) &&
+            set.designs.add(value.design);
     }
 
     /**
@@ -50,7 +53,8 @@ library CashLib {
         return
             set.ids.remove(value.id) &&
             set.holders.remove(value.holder) &&
-            set.nominals.remove(value.nominal);
+            set.nominals.remove(value.nominal) &&
+            set.designs.remove(value.design);
     }
 
     /**
@@ -63,17 +67,15 @@ library CashLib {
       return
           set.ids.remove(set.ids.at(index)) &&
           set.holders.remove(set.holders.at(index)) &&
-          set.nominals.remove(set.nominals.at(index));
+          set.nominals.remove(set.nominals.at(index)) &&
+          set.designs.remove(set.designs.at(index));
     }
 
     /**
      * @dev Returns true if the value is in the set. O(1).
      */
     function contains(CashSet storage set, Cash memory value) internal view returns(bool) {
-        return
-            set.ids.contains(value.id) &&
-            set.holders.contains(value.holder) &&
-            set.nominals.contains(value.nominal);
+        return set.ids.contains(value.id);
     }
 
     /**
@@ -123,6 +125,20 @@ library CashLib {
      */
     function atNominal(CashSet storage set, uint256 index) internal view returns(uint256 _nominal) {
         return set.nominals.at(index);
+    }
+
+    /**
+     * @dev Returns the ID of Cash Design NFT of cash stored at position `index` in the set. O(1).
+     *
+     * Note that there are no guarantees on the ordering of values inside the
+     * array, and it may change when more values are added or removed.
+     *
+     * Requirements:
+     *
+     * - `index` must be strictly less than {length}.
+     */
+    function atDesign(CashSet storage set, uint256 index) internal view returns(uint256 _design) {
+        return set.designs.at(index);
     }
 
 }

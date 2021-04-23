@@ -14,7 +14,7 @@ const { ZERO_ADDRESS } = constants;
 const { ZERO, ONE, getMockTokenPrepared, processEventArgs, checkSetter } = require('./utils/common.js');
 
 
-// const MockContract = artifacts.require("MockContract");
+const MockContract = artifacts.require("MockContract");
 
 contract('CashableUniswapAaveStrategy', (accounts) => {
 
