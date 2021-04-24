@@ -30,6 +30,7 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
 
     uint16 public constant AAVE_REFERRAL_CODE = 96;
     bytes32 public constant CASH_MACHINE_CLONE_ROLE = keccak256("CASH_MACHINE_CLONE_ROLE");
+    uint256 public constant MULTIPLIER = 10 ** 18;
 
     // cash machine => token
     mapping(address => address) public tokens;
@@ -37,8 +38,9 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
     // cash machine => volume
     mapping(address => uint256) public volumes;
 
-    // cash machine => earned interest
-    mapping(address => uint256) public interests;
+    // creator => share
+    mapping(address => uint256) public shares;
+    EnumerableSet.AddressSet private _creators;
 
     uint256 public totalAmountOfMainTokens;
 
@@ -122,7 +124,7 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
         }
     }
 
-    function register(address _cashMachine, address _token, uint256 _amount)
+    function register(address _cashMachine, address _creator, address _token, uint256 _amount)
         external
         override
         onlyCashMachineFactory
@@ -135,51 +137,53 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
         mainToken.approve(address(aaveLendingPool), amountInMainTokens);
         aaveLendingPool.deposit(mainTokenAddress, amountInMainTokens, address(this), AAVE_REFERRAL_CODE);
         totalAmountOfMainTokens = totalAmountOfMainTokens.add(amountInMainTokens);
+
+        shares[_creator] = (amountInMainTokens / totalAmountOfMainTokens) * MULTIPLIER;
+
         emit Register(_cashMachine, _amount, amountInMainTokens);
     }
 
-    function _contractIsNotDestroyed(address contract) internal returns(bool) {
-        uint256 size;
-        assembly {
-            size := extcodesize(contract)
-        }
-        return size > 0;
-    }
+    // function _contractIsNotDestroyed(address contract) internal returns(bool) {
+    //     uint256 size;
+    //     assembly {
+    //         size := extcodesize(contract)
+    //     }
+    //     return size > 0;
+    // }
 
 
-    function calcInterestInTokens(address who) public view returns(uint256 toMint) {
-        uint256 cashMachinesCount = getRoleMemberCount(CASH_MACHINE_CLONE_ROLE);
-        ICashMachine cashMachine;
-        address machineCreator;
-        for (uint256 i = 0; i < cashMachinesCount; i++) {
-            address cashMachineAddress = getRoleMember(CASH_MACHINE_CLONE_ROLE, i);
-            require(_contractIsNotDestroyed(cashMachineAddress), "cashMachineDestroyed");
-            cashMachine = ICashMachine(cashMachineAddress);
-            machineCreator = cashMachine.creator();
-            if (machineCreator == who) {
-                break;
-            }
-        }
-        require(address(cashMachine) != address(0), "machineNotFound");
-        uint256 nominalsSum = cashMachine.nominalsSum();
-        address machineToken = cashMachine.token();
-        uint256 nominalsSumInTokens = _getAmountOut(
-            machineToken,
-            mainTokenAddress,
-            nominalsSum
-        );
-        uint256 aMainTokenBalance = mainAToken.balanceOf(address(this));
-        uint256 revenue = aMainTokenBalance.sub(totalAmountOfMainTokens);
-        return revenue * (nominalsSumInTokens / totalAmountOfMainTokens);
-
-    }
-
-    function getInterest() external {
-        // forbid mint whenever he wants
-        address sender = _msgSender();
-        uint256 toMint = calcInterestInTokens(sender);
-        cashToken.mint(sender, toMint);
-    }
+    // function calcInterestInTokens(address who) public view returns(uint256 toMint) {
+    //     uint256 cashMachinesCount = getRoleMemberCount(CASH_MACHINE_CLONE_ROLE);
+    //     ICashMachine cashMachine;
+    //     address machineCreator;
+    //     for (uint256 i = 0; i < cashMachinesCount; i++) {
+    //         address cashMachineAddress = getRoleMember(CASH_MACHINE_CLONE_ROLE, i);
+    //         require(_contractIsNotDestroyed(cashMachineAddress), "cashMachineDestroyed");
+    //         cashMachine = ICashMachine(cashMachineAddress);
+    //         machineCreator = cashMachine.creator();
+    //         if (machineCreator == who) {
+    //             break;
+    //         }
+    //     }
+    //     require(address(cashMachine) != address(0), "machineNotFound");
+    //     uint256 nominalsSum = cashMachine.nominalsSum();
+    //     address machineToken = cashMachine.token();
+    //     uint256 nominalsSumInTokens = _getAmountOut(
+    //         machineToken,
+    //         mainTokenAddress,
+    //         nominalsSum
+    //     );
+    //     uint256 aMainTokenBalance = mainAToken.balanceOf(address(this));
+    //     uint256 revenue = aMainTokenBalance.sub(totalAmountOfMainTokens);
+    //     return revenue * (nominalsSumInTokens / totalAmountOfMainTokens);
+    // }
+    //
+    // function getInterest() external {
+    //     // forbid mint whenever he wants
+    //     address sender = _msgSender();
+    //     uint256 toMint = calcInterestInTokens(sender);
+    //     cashToken.mint(sender, toMint);
+    // }
 
     function harvest() override public onlyOwnerOrSelf {
         uint256 aMainTokenBalance = mainAToken.balanceOf(address(this));
@@ -220,6 +224,7 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
         if (volumes[sender] == 0) {
             revokeRole(CASH_MACHINE_CLONE_ROLE, sender);
         }
+        harvest();
         emit Withdraw(sender, amountInTokens, amountInMainTokens);
     }
 

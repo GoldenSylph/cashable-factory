@@ -118,7 +118,7 @@ contract CashMachineFactory is Ownable, ReentrancyGuard, FundsEvacuator, ERC165,
             require(msg.value >= nominalsSum, "!nominalEth");
             payable(defaultStrategy).sendValue(nominalsSum);
         }
-        ICashableStrategy(defaultStrategy).register(result, _token, nominalsSum);
+        ICashableStrategy(defaultStrategy).register(result, sender, _token, nominalsSum);
 
         emit CashMachineCreated(result, cashMachineImpl);
     }
