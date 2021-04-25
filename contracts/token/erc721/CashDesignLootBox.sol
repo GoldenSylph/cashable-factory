@@ -38,11 +38,11 @@ contract CashDesignLootBox is ERC721Tradable {
         _burn(msg.sender, _tokenId);
     }
 
-    function baseTokenURI() public pure returns (string memory) {
+    function baseTokenURI() public pure returns(string memory) {
         return "https://creatures-api.opensea.io/api/box/";
     }
 
-    function itemsPerLootbox() public view returns (uint256) {
+    function itemsPerLootbox() public view returns(uint256) {
         return NUM_CREATURES_PER_BOX;
     }
 }

@@ -255,7 +255,7 @@ library LootBoxRandomness {
     address _toAddress,
     uint256 _amount,
     address _owner
-  ) internal returns (uint256) {
+  ) internal returns(uint256) {
     require(_classId < _state.numClasses, "_class out of range");
     IFactory factory = IFactory(_state.factoryAddress);
     uint256 tokenId = _pickRandomAvailableTokenIdForClass(_state, _classId, _amount, _owner);
@@ -268,7 +268,7 @@ library LootBoxRandomness {
   function _pickRandomClass(
     LootBoxRandomnessState storage _state,
     uint16[] memory _classProbabilities
-  ) internal returns (uint256) {
+  ) internal returns(uint256) {
     uint16 value = uint16(_random(_state).mod(INVERSE_BASIS_POINT));
     // Start at top class (length - 1)
     // skip common (0), we default to it
@@ -289,7 +289,7 @@ library LootBoxRandomness {
     uint256 _classId,
     uint256 _minAmount,
     address _owner
-  ) internal returns (uint256) {
+  ) internal returns(uint256) {
     require(_classId < _state.numClasses, "_class out of range");
     uint256[] memory tokenIds = _state.classToTokenIds[_classId];
     require(tokenIds.length > 0, "No token ids for _classId");
@@ -310,7 +310,7 @@ library LootBoxRandomness {
    * @dev Pseudo-random number generator
    * NOTE: to improve randomness, generate it with an oracle
    */
-  function _random(LootBoxRandomnessState storage _state) internal returns (uint256) {
+  function _random(LootBoxRandomnessState storage _state) internal returns(uint256) {
     uint256 randomNumber = uint256(keccak256(abi.encodePacked(blockhash(block.number - 1), msg.sender, _state.seed)));
     _state.seed = randomNumber;
     return randomNumber;

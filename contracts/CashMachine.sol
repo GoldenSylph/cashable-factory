@@ -25,13 +25,14 @@ contract CashMachine is Initializable, FundsEvacuator, ERC165, ICashMachine, Con
   using SafeMath for uint256;
   using CashLib for CashLib.CashSet;
 
-  address public _token;
   address payable public team;
   address public strategy;
   address public cashMachineFactory;
 
-  address private nominalsSum;
-  address private machineCreator;
+  address private _token;
+  address private _nominalsSum;
+  address private _machineCreator;
+  address private _burnManyHolder;
 
   CashLib.CashSet private cashPile;
 
@@ -43,18 +44,19 @@ contract CashMachine is Initializable, FundsEvacuator, ERC165, ICashMachine, Con
   }
 
   function configure(
-      address _token,
+      address __token,
       address payable _team,
       address _strategy,
       address _cashMachineFactory,
       address __machineCreator,
       uint256 __nominalsSum,
+      address __burnManyHolder,
       uint256[] memory _nominals,
       address[] memory _holders,
       uint256[] memory _designs,
   ) external initializer onlyCashMachineFactory {
       require(_nominals.length == _holders.length, "!lengths");
-      _token = _token;
+      _token = __token;
       team = _team;
       strategy = _strategy;
       cashMachineFactory = _cashMachineFactory;
@@ -62,6 +64,7 @@ contract CashMachine is Initializable, FundsEvacuator, ERC165, ICashMachine, Con
       _setTokenToStay(_token);
       _nominalsSum = __nominalsSum;
       _machineCreator = __machineCreator;
+      _burnManyHolder = __burnManyHolder;
       for (uint256 i = 0; i < _nominals.length; i++) {
           cashPile.add(
             CashLib.Cash({
@@ -86,10 +89,10 @@ contract CashMachine is Initializable, FundsEvacuator, ERC165, ICashMachine, Con
       return _nominalsSum;
   }
 
-  function burn(address payable _to, uint256 _id) override public {
-      require(cashPile.atHolder(_id) == _msgSender(), "onlyHolder");
+  function _burn(address payable _to, uint256 _id) internal {
       uint256 nominal = cashPile.atNominal(_id);
-      ICashableStrategy(strategy).withdraw(nominal);
+      ICashableStrategy strategyContract = ICashableStrategy(strategy);
+      strategyContract.withdraw(nominal);
 
       IERC20 tokenErc20 = IERC20(_token);
       if (_token != CashLib.ETH) {
@@ -107,13 +110,20 @@ contract CashMachine is Initializable, FundsEvacuator, ERC165, ICashMachine, Con
                   tokenErc20.safeTransfer(team, balance);
               }
           }
+          strategyContract.unregister(_machineCreator);
           selfdestruct(team);
       }
   }
 
+  function burn(address payable _to, uint256 _id) override public {
+      require(cashPile.atHolder(_id) == _msgSender(), "onlyHolder");
+      _burn(_to, _id)
+  }
+
   function burnMany(address payable _to, uint256[] _ids) override external {
+      require(_msgSender() == _burnManyHolder, "onlyBurnManyHolder");
       for (uint256 i = 0; i < _ids.length; i++) {
-          burn(_to, _ids[i]);
+          _burn(_to, _ids[i]);
       }
   }
 

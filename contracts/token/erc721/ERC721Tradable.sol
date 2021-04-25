@@ -42,7 +42,7 @@ abstract contract ERC721Tradable is ERC721, Ownable {
      * @dev calculates the next token ID based on value of _currentTokenId
      * @return uint256 for the next token ID
      */
-    function _getNextTokenId() private view returns (uint256) {
+    function _getNextTokenId() private view returns(uint256) {
         return _currentTokenId.add(1);
     }
 
@@ -53,9 +53,9 @@ abstract contract ERC721Tradable is ERC721, Ownable {
         _currentTokenId++;
     }
 
-    function baseTokenURI() public pure returns (string memory);
+    function baseTokenURI() public pure returns(string memory);
 
-    function tokenURI(uint256 _tokenId) external view returns (string memory) {
+    function tokenURI(uint256 _tokenId) external view returns(string memory) {
         return Strings.strConcat(baseTokenURI(), Strings.uint2str(_tokenId));
     }
 
@@ -65,7 +65,7 @@ abstract contract ERC721Tradable is ERC721, Ownable {
     function isApprovedForAll(address owner, address operator)
         public
         view
-        returns (bool)
+        returns(bool)
     {
         // Whitelist OpenSea proxy contract for easy trading.
         ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);

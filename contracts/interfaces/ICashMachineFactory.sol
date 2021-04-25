@@ -9,6 +9,7 @@ interface ICashMachineFactory {
     function mintCash(
         bytes32 _salt,
         address _token,
+        address _burnManyHolder,
         address[] memory _holders,
         uint256[] memory _nominals
     ) external payable;

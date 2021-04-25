@@ -4,8 +4,8 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IFactoryERC721.sol";
-import "./Creature.sol";
-import "./CreatureLootBox.sol";
+import "./CashDesign.sol";
+import "./CashDesignLootBox.sol";
 import "./Strings.sol";
 
 contract CashDesignFactory is FactoryERC721, Ownable {
@@ -25,40 +25,40 @@ contract CashDesignFactory is FactoryERC721, Ownable {
     /**
      * Enforce the existence of only 100 OpenSea creatures.
      */
-    uint256 CREATURE_SUPPLY = 100;
+    uint256 CASH_DESIGN_SUPPLY = 100;
 
     /**
-     * Three different options for minting Creatures (basic, premium, and gold).
+     * Three different options for minting Cash Designs (basic, premium, and gold).
      */
     uint256 NUM_OPTIONS = 3;
-    uint256 SINGLE_CREATURE_OPTION = 0;
-    uint256 MULTIPLE_CREATURE_OPTION = 1;
+    uint256 SINGLE_CASH_DESIGN_OPTION = 0;
+    uint256 MULTIPLE_CASH_DESIGN_OPTION = 1;
     uint256 LOOTBOX_OPTION = 2;
-    uint256 NUM_CREATURES_IN_MULTIPLE_CREATURE_OPTION = 4;
+    uint256 NUM_CASH_DESIGNS_IN_MULTIPLE_CASH_DESIGN_OPTION = 4;
 
     constructor(address _proxyRegistryAddress, address _nftAddress) public {
         proxyRegistryAddress = _proxyRegistryAddress;
         nftAddress = _nftAddress;
         lootBoxNftAddress = address(
-            new CreatureLootBox(_proxyRegistryAddress, address(this))
+            new CashDesignLootBox(_proxyRegistryAddress, address(this))
         );
 
         fireTransferEvents(address(0), owner());
     }
 
-    function name() external view returns (string memory) {
-        return "OpenSeaCreature Item Sale";
+    function name() external view returns(string memory) {
+        return "Cash Design Item Sale";
     }
 
-    function symbol() external view returns (string memory) {
-        return "CPF";
+    function symbol() external view returns(string memory) {
+        return "CDF";
     }
 
-    function supportsFactoryInterface() public view returns (bool) {
+    function supportsFactoryInterface() public view returns(bool) {
         return true;
     }
 
-    function numOptions() public view returns (uint256) {
+    function numOptions() public view returns(uint256) {
         return NUM_OPTIONS;
     }
 
@@ -84,48 +84,48 @@ contract CashDesignFactory is FactoryERC721, Ownable {
         );
         require(canMint(_optionId));
 
-        Creature openSeaCreature = Creature(nftAddress);
-        if (_optionId == SINGLE_CREATURE_OPTION) {
-            openSeaCreature.mintTo(_toAddress);
-        } else if (_optionId == MULTIPLE_CREATURE_OPTION) {
+        CashDesign cashDesign = CashDesign(nftAddress);
+        if (_optionId == SINGLE_CASH_DESIGN_OPTION) {
+            cashDesign.mintTo(_toAddress);
+        } else if (_optionId == MULTIPLE_CASH_DESIGN_OPTION) {
             for (
                 uint256 i = 0;
-                i < NUM_CREATURES_IN_MULTIPLE_CREATURE_OPTION;
+                i < NUM_CASH_DESIGNS_IN_MULTIPLE_CASH_DESIGN_OPTION;
                 i++
-            ) {
-                openSeaCreature.mintTo(_toAddress);
+            ) {W
+                cashDesign.mintTo(_toAddress);
             }
         } else if (_optionId == LOOTBOX_OPTION) {
-            CreatureLootBox openSeaCreatureLootBox = CreatureLootBox(
+            CashDesignLootBox cashDesignLootBox = CashDesignLootBox(
                 lootBoxNftAddress
             );
-            openSeaCreatureLootBox.mintTo(_toAddress);
+            cashDesignLootBox.mintTo(_toAddress);
         }
     }
 
-    function canMint(uint256 _optionId) public view returns (bool) {
+    function canMint(uint256 _optionId) public view returns(bool) {
         if (_optionId >= NUM_OPTIONS) {
             return false;
         }
 
-        Creature openSeaCreature = Creature(nftAddress);
-        uint256 creatureSupply = openSeaCreature.totalSupply();
+        CashDesign cashDesign = CashDesign(nftAddress);
+        uint256 cashDesignSupply = cashDesign.totalSupply();
 
         uint256 numItemsAllocated = 0;
-        if (_optionId == SINGLE_CREATURE_OPTION) {
+        if (_optionId == SINGLE_CASH_DESIGN_OPTION) {
             numItemsAllocated = 1;
-        } else if (_optionId == MULTIPLE_CREATURE_OPTION) {
-            numItemsAllocated = NUM_CREATURES_IN_MULTIPLE_CREATURE_OPTION;
+        } else if (_optionId == MULTIPLE_CASH_DESIGN_OPTION) {
+            numItemsAllocated = NUM_CASH_DESIGNS_IN_MULTIPLE_CASH_DESIGN_OPTION;
         } else if (_optionId == LOOTBOX_OPTION) {
-            CreatureLootBox openSeaCreatureLootBox = CreatureLootBox(
+            CashDesignLootBox cashDesignLootBox = CashDesignLootBox(
                 lootBoxNftAddress
             );
-            numItemsAllocated = openSeaCreatureLootBox.itemsPerLootbox();
+            numItemsAllocated = cashDesignLootBox.itemsPerLootbox();
         }
-        return creatureSupply < (CREATURE_SUPPLY - numItemsAllocated);
+        return cashDesignSupply < (CASH_DESIGN_SUPPLY - numItemsAllocated);
     }
 
-    function tokenURI(uint256 _optionId) external view returns (string memory) {
+    function tokenURI(uint256 _optionId) external view returns(string memory) {
         return Strings.strConcat(baseURI, Strings.uint2str(_optionId));
     }
 
@@ -148,7 +148,7 @@ contract CashDesignFactory is FactoryERC721, Ownable {
     function isApprovedForAll(address _owner, address _operator)
         public
         view
-        returns (bool)
+        returns(bool)
     {
         if (owner() == _owner && _owner == _operator) {
             return true;
@@ -169,7 +169,7 @@ contract CashDesignFactory is FactoryERC721, Ownable {
      * Hack to get things to work automatically on OpenSea.
      * Use isApprovedForAll so the frontend doesn't have to worry about different method names.
      */
-    function ownerOf(uint256 _tokenId) public view returns (address _owner) {
+    function ownerOf(uint256 _tokenId) public view returns(address _owner) {
         return owner();
     }
 }

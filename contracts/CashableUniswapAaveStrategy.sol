@@ -43,6 +43,8 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
     EnumerableSet.AddressSet private _creators;
 
     uint256 public totalAmountOfMainTokens;
+    uint256 public rateNominator;
+    uint256 public rateDenominator;
 
     IERC20 public mainToken;
     IERC20 public mainAToken;
@@ -56,6 +58,10 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
         address indexed _cashMachine,
         uint256 indexed _sumOfNominals,
         uint256 indexed _sumOfNominalsInMainTokens
+    );
+    event Unregister(
+        address indexed _cashMachine,
+        address indexed _creator
     );
     event Withdraw(
         address indexed _cashMachine,
@@ -84,6 +90,8 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
     }
 
     function configure(
+      uint256 _rateNominator,
+      uint256 _rateDenominator,
       address _mainToken,
       address _mainAToken,
       address _uniswapRouter,
@@ -91,6 +99,7 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
       address _cashMachineFactory,
       address _cashToken
     ) external initializer {
+        require(_rateNominator <= _rateDenominator, "gtOne");
         mainToken = IERC20(_mainToken);
         mainAToken = IERC20(_mainAToken);
         uniswapRouter = IUniswapV2Router02(_uniswapRouter);
@@ -139,51 +148,10 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
         totalAmountOfMainTokens = totalAmountOfMainTokens.add(amountInMainTokens);
 
         shares[_creator] = (amountInMainTokens / totalAmountOfMainTokens) * MULTIPLIER;
+        _creators.add(_creator);
 
         emit Register(_cashMachine, _amount, amountInMainTokens);
     }
-
-    // function _contractIsNotDestroyed(address contract) internal returns(bool) {
-    //     uint256 size;
-    //     assembly {
-    //         size := extcodesize(contract)
-    //     }
-    //     return size > 0;
-    // }
-
-
-    // function calcInterestInTokens(address who) public view returns(uint256 toMint) {
-    //     uint256 cashMachinesCount = getRoleMemberCount(CASH_MACHINE_CLONE_ROLE);
-    //     ICashMachine cashMachine;
-    //     address machineCreator;
-    //     for (uint256 i = 0; i < cashMachinesCount; i++) {
-    //         address cashMachineAddress = getRoleMember(CASH_MACHINE_CLONE_ROLE, i);
-    //         require(_contractIsNotDestroyed(cashMachineAddress), "cashMachineDestroyed");
-    //         cashMachine = ICashMachine(cashMachineAddress);
-    //         machineCreator = cashMachine.creator();
-    //         if (machineCreator == who) {
-    //             break;
-    //         }
-    //     }
-    //     require(address(cashMachine) != address(0), "machineNotFound");
-    //     uint256 nominalsSum = cashMachine.nominalsSum();
-    //     address machineToken = cashMachine.token();
-    //     uint256 nominalsSumInTokens = _getAmountOut(
-    //         machineToken,
-    //         mainTokenAddress,
-    //         nominalsSum
-    //     );
-    //     uint256 aMainTokenBalance = mainAToken.balanceOf(address(this));
-    //     uint256 revenue = aMainTokenBalance.sub(totalAmountOfMainTokens);
-    //     return revenue * (nominalsSumInTokens / totalAmountOfMainTokens);
-    // }
-    //
-    // function getInterest() external {
-    //     // forbid mint whenever he wants
-    //     address sender = _msgSender();
-    //     uint256 toMint = calcInterestInTokens(sender);
-    //     cashToken.mint(sender, toMint);
-    // }
 
     function harvest() override public onlyOwnerOrSelf {
         uint256 aMainTokenBalance = mainAToken.balanceOf(address(this));
@@ -191,9 +159,16 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
             uint256 revenue = aMainTokenBalance.sub(totalAmountOfMainTokens);
             address _owner = owner();
             mainAToken.safeTransfer(_owner, revenue);
+
+            for (uint256 i = 0; i < _creators.length(); i++) {
+                address _creator = _creators.at(i);
+                cashToken.mint(_creator, revenue * (shares[_creator] / MULTIPLIER) / (rateNominator / rateDenominator));
+            }
+
             emit Harvest(revenue);
         }
     }
+
 
     function withdraw(uint256 _amount)
         external
@@ -222,9 +197,13 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
 
         (,volumes[sender]) = volume.trySub(amountInTokens);
         if (volumes[sender] == 0) {
+            address _creator = ICashMachine(sender).creator();
             revokeRole(CASH_MACHINE_CLONE_ROLE, sender);
+            tokens[sender] = address(0);
+            shares[_creator] = 0;
+            _creators.remove(_creator);
+            emit Unregister(sender, _creator);
         }
-        harvest();
         emit Withdraw(sender, amountInTokens, amountInMainTokens);
     }
 
