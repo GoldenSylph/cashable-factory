@@ -3,7 +3,7 @@ pragma solidity =0.8.3;
 pragma experimental ABIEncoderV2;
 
 
-library Strings {
+library StringsConcatenations {
   // via https://github.com/oraclize/ethereum-api/blob/master/oraclizeAPI_0.5.sol
   function strConcat(string memory _a, string memory _b, string memory _c, string memory _d, string memory _e) internal pure returns (string memory) {
       bytes memory _ba = bytes(_a);
@@ -47,7 +47,7 @@ library Strings {
         bytes memory bstr = new bytes(len);
         uint k = len - 1;
         while (_i != 0) {
-            bstr[k--] = byte(uint8(48 + _i % 10));
+            bstr[k--] = uint8(48 + _i % 10);
             _i /= 10;
         }
         return string(bstr);

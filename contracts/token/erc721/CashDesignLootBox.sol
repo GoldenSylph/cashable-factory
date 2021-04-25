@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "./ERC721Tradable.sol";
 import "./CashDesign.sol";
-import "./IFactoryERC721.sol";
+import "../../interfaces/IFactoryERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**

@@ -3,13 +3,13 @@ pragma solidity =0.8.3;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./IFactoryERC721.sol";
+import "../../interfaces/IFactoryERC721.sol";
 import "./CashDesign.sol";
 import "./CashDesignLootBox.sol";
-import "./Strings.sol";
+import "../../lib/StringsConcatenations.sol";
 
 contract CashDesignFactory is FactoryERC721, Ownable {
-    using Strings for string;
+    using StringsConcatenations for string;
 
     event Transfer(
         address indexed from,
@@ -22,12 +22,12 @@ contract CashDesignFactory is FactoryERC721, Ownable {
     address public lootBoxNftAddress;
     string public baseURI = "https://creatures-api.opensea.io/api/factory/";
 
-    /**
+    /*
      * Enforce the existence of only 100 OpenSea creatures.
      */
     uint256 CASH_DESIGN_SUPPLY = 100;
 
-    /**
+    /*
      * Three different options for minting Cash Designs (basic, premium, and gold).
      */
     uint256 NUM_OPTIONS = 3;
@@ -92,7 +92,7 @@ contract CashDesignFactory is FactoryERC721, Ownable {
                 uint256 i = 0;
                 i < NUM_CASH_DESIGNS_IN_MULTIPLE_CASH_DESIGN_OPTION;
                 i++
-            ) {W
+            ) {
                 cashDesign.mintTo(_toAddress);
             }
         } else if (_optionId == LOOTBOX_OPTION) {
@@ -126,7 +126,7 @@ contract CashDesignFactory is FactoryERC721, Ownable {
     }
 
     function tokenURI(uint256 _optionId) external view returns(string memory) {
-        return Strings.strConcat(baseURI, Strings.uint2str(_optionId));
+        return StringsConcatenations.strConcat(baseURI, StringsConcatenations.uint2str(_optionId));
     }
 
     /**

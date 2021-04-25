@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import "./CashMachine.sol";
 import "./lib/CashLib.sol";
@@ -25,6 +26,7 @@ contract CashMachineFactory is Ownable, ReentrancyGuard, FundsEvacuator, ERC165,
     using Address for address payable;
     using Address for address;
     using SafeMath for uint256;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     address public cashMachineImpl;
     address public defaultStrategy;

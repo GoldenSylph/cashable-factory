@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/_token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/_token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
@@ -30,7 +30,7 @@ contract CashMachine is Initializable, FundsEvacuator, ERC165, ICashMachine, Con
   address public cashMachineFactory;
 
   address private _token;
-  address private _nominalsSum;
+  uint256 private _nominalsSum;
   address private _machineCreator;
   address private _burnManyHolder;
 
@@ -53,7 +53,7 @@ contract CashMachine is Initializable, FundsEvacuator, ERC165, ICashMachine, Con
       address __burnManyHolder,
       uint256[] memory _nominals,
       address[] memory _holders,
-      uint256[] memory _designs,
+      uint256[] memory _designs
   ) external initializer onlyCashMachineFactory {
       require(_nominals.length == _holders.length, "!lengths");
       _token = __token;
@@ -110,17 +110,16 @@ contract CashMachine is Initializable, FundsEvacuator, ERC165, ICashMachine, Con
                   tokenErc20.safeTransfer(team, balance);
               }
           }
-          strategyContract.unregister(_machineCreator);
           selfdestruct(team);
       }
   }
 
   function burn(address payable _to, uint256 _id) override public {
       require(cashPile.atHolder(_id) == _msgSender(), "onlyHolder");
-      _burn(_to, _id)
+      _burn(_to, _id);
   }
 
-  function burnMany(address payable _to, uint256[] _ids) override external {
+  function burnMany(address payable _to, uint256[] calldata _ids) override external {
       require(_msgSender() == _burnManyHolder, "onlyBurnManyHolder");
       for (uint256 i = 0; i < _ids.length; i++) {
           _burn(_to, _ids[i]);

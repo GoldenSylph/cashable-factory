@@ -1,4 +1,6 @@
-pragma solidity ^0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity =0.8.3;
+pragma experimental ABIEncoderV2;
 
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
