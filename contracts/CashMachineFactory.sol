@@ -87,28 +87,31 @@ contract CashMachineFactory is Ownable, ReentrancyGuard, FundsEvacuator, ERC165,
         address sender = _msgSender();
 
         uint256 nominalsSum = 0;
-        for (uint256 i; i < _holders.length; i++) {
-            require(sender != _holders[i], "holder==sender");
-            require(!_holders[i].isContract(), "holderContract");
-            nominalsSum = nominalsSum.add(_nominals[i]);
-            require(designNft.ownerOf(_designs[i]) == sender, "designIsNotOwned");
+        {
+            for (uint256 i = 0; i < _holders.length; i++) {
+                require(sender != _holders[i], "holder==sender");
+                require(!_holders[i].isContract(), "holderContract");
+                require(designNft.ownerOf(_designs[i]) == sender, "designIsNotOwned");
+                nominalsSum = nominalsSum.add(_nominals[i]);
+            }
         }
 
         address payable result = payable(Clones.cloneDeterministic(cashMachineImpl, _salt));
 
-        CashMachine cashMachine = CashMachine(result);
-        cashMachine.configure(
-            _token,
-            payable(owner()),
-            defaultStrategy,
-            address(this),
-            sender,
-            nominalsSum,
-            _burnManyHolder,
-            _nominals,
-            _holders,
-            _designs
-        );
+        {
+            CashMachine(result).configure(
+                _token,
+                payable(owner()),
+                defaultStrategy,
+                address(this),
+                sender,
+                nominalsSum,
+                _burnManyHolder,
+                _nominals,
+                _holders,
+                _designs
+            );
+        }
 
         if (_token != CashLib.ETH) {
             IERC20(_token).safeTransferFrom(sender, defaultStrategy, nominalsSum);
