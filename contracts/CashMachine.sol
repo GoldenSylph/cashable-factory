@@ -77,15 +77,15 @@ contract CashMachine is Initializable, FundsEvacuator, ERC165, ICashMachine, Con
       }
   }
 
-  function token() external view returns(address) {
+  function token() external override view returns(address) {
       return _token;
   }
 
-  function creator() external view returns(address) {
+  function creator() external override view returns(address) {
       return _machineCreator;
   }
 
-  function nominalsSum() external view returns(uint256) {
+  function nominalsSum() external override view returns(uint256) {
       return _nominalsSum;
   }
 

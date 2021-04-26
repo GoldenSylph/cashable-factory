@@ -3,6 +3,7 @@ pragma solidity =0.8.3;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
@@ -15,7 +16,8 @@ import "./ProxyRegistry.sol";
  * @title ERC721Tradable
  * ERC721Tradable - ERC721 contract that whitelists a trading address, and has minting functionality.
  */
-abstract contract ERC721Tradable is ERC721, Ownable {
+contract ERC721Tradable is ERC721Enumerable, Ownable {
+
     using StringsConcatenations for string;
     using SafeMath for uint256;
 
@@ -55,9 +57,11 @@ abstract contract ERC721Tradable is ERC721, Ownable {
         _currentTokenId++;
     }
 
-    function baseTokenURI() public pure returns(string memory);
+    function baseTokenURI() public virtual pure returns(string memory) {
+        return "";
+    }
 
-    function tokenURI(uint256 _tokenId) external view returns(string memory) {
+    function tokenURI(uint256 _tokenId) public override view returns(string memory) {
         return StringsConcatenations.strConcat(baseTokenURI(), StringsConcatenations.uint2str(_tokenId));
     }
 
@@ -66,6 +70,7 @@ abstract contract ERC721Tradable is ERC721, Ownable {
      */
     function isApprovedForAll(address owner, address operator)
         public
+        override
         view
         returns(bool)
     {

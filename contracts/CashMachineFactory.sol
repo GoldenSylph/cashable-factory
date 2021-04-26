@@ -76,28 +76,22 @@ contract CashMachineFactory is Ownable, ReentrancyGuard, FundsEvacuator, ERC165,
         uint256 _banknoteDesign,
         bytes32 _salt,
         address _burnManyHolder,
-        address[] calldata _holders,
-        uint256[] calldata _nominals,
-        uint256[] calldata _designs
+        address[] memory _holders,
+        uint256[] memory _nominals,
+        uint256[] memory _designs
     ) external payable override nonReentrant {
+
         require(_nominals.length == _holders.length, "!lengths");
         require(_designs.length == _holders.length, "!lengthsDesigns");
 
         address sender = _msgSender();
 
         uint256 nominalsSum = 0;
-
-        EnumerableSet.UintSet storage checkedDesigns;
-
         for (uint256 i; i < _holders.length; i++) {
             require(sender != _holders[i], "holder==sender");
             require(!_holders[i].isContract(), "holderContract");
             nominalsSum = nominalsSum.add(_nominals[i]);
-            uint256 design = _designs[i];
-            if (!checkedDesigns.contains(design)) {
-                require(designNft.ownerOf(design) == sender, "designIsNotOwned");
-                checkedDesigns.add(design);
-            }
+            require(designNft.ownerOf(_designs[i]) == sender, "designIsNotOwned");
         }
 
         address payable result = payable(Clones.cloneDeterministic(cashMachineImpl, _salt));

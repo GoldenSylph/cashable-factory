@@ -199,8 +199,8 @@ contract CashableUniswapAaveStrategy is Ownable, Initializable, AccessControlEnu
         if (volumes[sender] == 0) {
             address _creator = ICashMachine(sender).creator();
             revokeRole(CASH_MACHINE_CLONE_ROLE, sender);
-            tokens[sender] = address(0);
-            shares[_creator] = 0;
+            delete tokens[sender];
+            delete shares[_creator];
             _creators.remove(_creator);
             emit Unregister(sender, _creator);
         }

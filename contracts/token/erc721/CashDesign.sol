@@ -15,7 +15,7 @@ contract CashDesign is ERC721Tradable {
         ERC721Tradable("Cash Design", "CHDN", _proxyRegistryAddress)
     {}
 
-    function baseTokenURI() public pure returns(string memory) {
+    function baseTokenURI() public override pure returns(string memory) {
         return "https://creatures-api.opensea.io/api/creature/";
     }
 

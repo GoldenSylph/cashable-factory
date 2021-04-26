@@ -35,10 +35,10 @@ contract CashDesignLootBox is ERC721Tradable {
         }
 
         // Burn the presale item.
-        _burn(msg.sender, _tokenId);
+        _burn(_tokenId);
     }
 
-    function baseTokenURI() public pure returns(string memory) {
+    function baseTokenURI() public override pure returns(string memory) {
         return "https://creatures-api.opensea.io/api/box/";
     }
 

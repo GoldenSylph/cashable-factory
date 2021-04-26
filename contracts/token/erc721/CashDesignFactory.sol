@@ -46,23 +46,23 @@ contract CashDesignFactory is FactoryERC721, Ownable {
         fireTransferEvents(address(0), owner());
     }
 
-    function name() external view returns(string memory) {
+    function name() external override view returns(string memory) {
         return "Cash Design Item Sale";
     }
 
-    function symbol() external view returns(string memory) {
+    function symbol() external override view returns(string memory) {
         return "CDF";
     }
 
-    function supportsFactoryInterface() public view returns(bool) {
+    function supportsFactoryInterface() public override view returns(bool) {
         return true;
     }
 
-    function numOptions() public view returns(uint256) {
+    function numOptions() public override view returns(uint256) {
         return NUM_OPTIONS;
     }
 
-    function transferOwnership(address newOwner) public onlyOwner {
+    function transferOwnership(address newOwner) override public onlyOwner {
         address _prevOwner = owner();
         super.transferOwnership(newOwner);
         fireTransferEvents(_prevOwner, newOwner);
@@ -74,7 +74,7 @@ contract CashDesignFactory is FactoryERC721, Ownable {
         }
     }
 
-    function mint(uint256 _optionId, address _toAddress) public {
+    function mint(uint256 _optionId, address _toAddress) override public {
         // Must be sent from the owner proxy or owner.
         ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
         assert(
@@ -103,7 +103,7 @@ contract CashDesignFactory is FactoryERC721, Ownable {
         }
     }
 
-    function canMint(uint256 _optionId) public view returns(bool) {
+    function canMint(uint256 _optionId) public override view returns(bool) {
         if (_optionId >= NUM_OPTIONS) {
             return false;
         }
@@ -125,7 +125,7 @@ contract CashDesignFactory is FactoryERC721, Ownable {
         return cashDesignSupply < (CASH_DESIGN_SUPPLY - numItemsAllocated);
     }
 
-    function tokenURI(uint256 _optionId) external view returns(string memory) {
+    function tokenURI(uint256 _optionId) external override view returns(string memory) {
         return StringsConcatenations.strConcat(baseURI, StringsConcatenations.uint2str(_optionId));
     }
 
